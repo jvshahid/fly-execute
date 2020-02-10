@@ -1,4 +1,4 @@
-(ns feather.main
+(ns fly-exec.main
   (:require
    [type-args :as args]
    [clojure.core.async :refer [<! >! chan go map]]
@@ -98,7 +98,7 @@
             concourse-task        (first (filter #(= task (:task %))
                                                  (:plan concourse-job)))]
         (println (join " " (concat (task-params task)
-                                   (fly-flags target workspace pipeline job task)
+                                   (fly-flags target workspace pipeline job concourse-task)
                                    (task-priv-flag task)
                                    (task-image-flag task)
                                    (task-inputs workspace input)
