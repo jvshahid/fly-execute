@@ -1,0 +1,15 @@
+---
+jobs:
+- name: job-with-tasks
+  plan:
+  - in_parallel:
+    - get: input-1
+    - get: input-2
+  - task: some-task
+    file: some-input/jobs/job-with-tasks/tasks/some-task/task.yml
+    privileged: true
+    params:
+      foo: bar
+    image: input-1
+    input_mapping:
+      task-input: input-2

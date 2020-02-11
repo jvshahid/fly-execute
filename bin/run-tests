@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -e
+
+$(npm bin)/lumo -c src:test -m fly-exec.core-test

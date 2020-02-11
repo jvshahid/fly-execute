@@ -1,8 +1,9 @@
 (ns fly-exec.main
   (:require
+   [fly-exec.core :as fly]
    [type-args :as args]
    [clojure.core.async :refer [<! >! chan go map]]
-   [clojure.string :refer [join]]
+   [clojure.string :as string]
    [js-yaml :as yaml]
    [process]
    [child_process :as proc]))
@@ -47,62 +48,24 @@
   (map (comp #(js->clj %1 :keywordize-keys true) yaml/load)
        [(exec (str "fly -t " target " gp -p " pipeline))]))
 
-(defn- task-params [task]
-  (let [params (:params task)]
-    (for [[param value] params]
-      (str (name param)
-           "="
-           value))))
-
-(defn- fly-flags [target workspace pipeline job task]
-  (let [file (:file task)]
-    (list "fly -t" target
-          "execute -c" (str workspace "/" file)
-          "-j" (str pipeline "/" job))))
-
-(defn- task-priv-flag [task]
-  (let [privileged? (:privileged task)]
-    (if privileged?
-      (list "-p"))))
-
-(defn- task-image-flag [task]
-  (let [image (:image task)]
-    (if image
-      (list (str "--image=" image)))))
-
-(defn- task-inputs [workspace inputs]
-  (for [input inputs]
-    (str "-i " input "=" workspace "/" input)))
-
-(defn- task-input-mappings [task]
-  (let [input-mappings (:input_mapping task)]
-    (for [[new-name res] input-mappings]
-      (str "-m "
-           (name new-name)        ; convert keyword to a string
-           "=" res))))
-
 (defn- print-help-and-exit []
   (println "Printing help")
   (process/exit 1))
 
 (defn -main [& args]
-  (let [[{:keys [target workspace pipeline job input help] :as args} _ others] (parse-args args)
-        [job task] (clojure.string/split job #"/")]
+  (let [[{:keys [target workspace pipeline job input help] :as args} _ others] (parse-args args)]
     (when help
       (print-help-and-exit))
     (go
-      (let [concourse-pipeline    (<! (get-pipeline target pipeline))
-            pipeline-jobs         (:jobs pipeline)
-            concourse-job         (first (filter #(= job (:name %))
-                                                 pipeline-jobs))
-            concourse-task        (first (filter #(= task (:task %))
-                                                 (:plan concourse-job)))]
-        (println (join " " (concat (task-params task)
-                                   (fly-flags target workspace pipeline job concourse-task)
-                                   (task-priv-flag task)
-                                   (task-image-flag task)
-                                   (task-inputs workspace input)
-                                   (task-input-mappings task))))))))
+      (let [concourse-pipeline   (<! (get-pipeline target pipeline))
+            task                 (fly/find-task concourse-pipeline job)
+            [job-name task-name] (string/split job #"/")]
+        (println (string/join " " (concat (fly/task-params task)
+                                          (fly/fly-flags target workspace pipeline job-name task)
+                                          (fly/task-priv-flag task)
+                                          (fly/task-image-flag task)
+                                          (fly/task-inputs workspace input)
+                                          (fly/task-input-mappings task))))))))
 
 
 
