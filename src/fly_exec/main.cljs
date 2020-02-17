@@ -2,34 +2,28 @@
   (:require
    [fly-exec.core :as fly]
    [type-args :as args]
-   [clojure.core.async :refer [<! >! chan go map]]
    [clojure.string :as string]
    [js-yaml :as yaml]
    [process]
    [child_process :as proc]))
 
-(def home (.-HOME process/env))
+(defn- default-workspace []
+  (str (.-HOME process/env) "/workspace"))
 
 (defn- parse-args [args]
   (let [options     {:help {:alias "h"
-                            :description "Display this help"
                             :type "boolean"}
                      :target {:alias "t"
-                              :desc "The fly target"
                               :type "string"}
                      :pipeline {:alias "p"
-                                :desc "The pipeline"
                                 :type "string"}
                      :job {:alias "j"
-                           :desc "The job and task you wish to execute, e.g. job/task"
                            :type "string"}
                      :input {:alias "i"
-                             :desc "The inputs to override"
                              :type "string[]"}
                      :workspace {:alias "w"
-                                 :desc "The workspace relative to which the inputs will be specified"
                                  :type "string"
-                                 :default (str home "/workspace")}}
+                                 :default (default-workspace)}}
         parsed-args (args/parse (clj->js args)
                                 (clj->js options))]
     (js->clj parsed-args :keywordize-keys true)))
@@ -37,35 +31,53 @@
 (defn- exec
   "Execute the given CMD and return a channel with the output"
   [cmd]
-  (let [output (chan)]
-    (proc/exec cmd (fn [err stdout stderr]
-                     (if err
-                       (throw err)
-                       (go (>! (or err output) stdout)))))
-    output))
+  (proc/execSync cmd))
 
 (defn- get-pipeline [target pipeline]
-  (map (comp #(js->clj %1 :keywordize-keys true) yaml/load)
-       [(exec (str "fly -t " target " gp -p " pipeline))]))
+  (let [pipeline-yaml (exec (str "fly -t " target " gp -p " pipeline))]
+    (js->clj (yaml/load pipeline-yaml)
+             :keywordize-keys true)))
 
 (defn- print-help-and-exit []
-  (println "Printing help")
-  (process/exit 1))
+  ;; FLY_EXEC_PATH is set by the bash script in bin/fly-exec
+  (let  [binary (.-FLY_EXEC_PATH process/env)
+         usage "
+Usage:
+    $0 [options] [extra_arguments]
+
+[options]
+    -h                       Show this help message
+    -t TARGET                Concourse TARGET name
+    -p PIPELINE              Execute a task in this PIPELINE
+    -j JOB/TASK              Execute the TASK in the given JOB
+    -w WORKSPACE             The path to the workspace. Task inputs
+                             and outputs will be assumed to reside
+                             in the workspace.
+    -i INPUT                 The INPUTs to provide to the task (can
+                             be specified multiple times).
+
+Examples:
+
+    $ $0 -t ci -p pipeline -j job/task -i some-input
+  ->
+    PARAM1=VALUE1 fly -t ci -p pipeline -j job/task execute -c
+    /path/to/workspace/repo/job/task/task.yml
+    -i some-input=/path/to/workspace/some-input"]
+
+    (println (string/replace usage "$0" binary))
+    (process/exit 1)))
 
 (defn -main [& args]
-  (let [[{:keys [target workspace pipeline job input help] :as args} _ others] (parse-args args)]
+  (let [[{:keys [target workspace pipeline job input help] :as args} _ _] (parse-args args)]
     (when help
       (print-help-and-exit))
-    (go
-      (let [concourse-pipeline   (<! (get-pipeline target pipeline))
-            task                 (fly/find-task concourse-pipeline job)
-            [job-name task-name] (string/split job #"/")]
-        (println (string/join " " (concat (fly/task-params task)
-                                          (fly/fly-flags target workspace pipeline job-name task)
-                                          (fly/task-priv-flag task)
-                                          (fly/task-image-flag task)
-                                          (fly/task-inputs workspace input)
-                                          (fly/task-input-mappings task))))))))
-
-
-
+    (let [concourse-pipeline   (get-pipeline target pipeline)
+          task                 (fly/find-task concourse-pipeline job)
+          [job-name task-name] (string/split job #"/")]
+      (println (string/join " " (concat (fly/task-params task)
+                                        (fly/fly-flags target workspace pipeline job-name task)
+                                        (fly/task-priv-flag task)
+                                        (fly/task-image-flag task)
+                                        (fly/task-inputs workspace input)
+                                        (fly/task-outputs workspace task)
+                                        (fly/task-input-mappings task)))))))

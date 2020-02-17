@@ -7,7 +7,7 @@
    [js-yaml :as yaml]))
 
 (def pipeline
-  (js->clj (yaml/load (fs/readFileSync "test/fly_exec/pipeline.yml"))
+  (js->clj (yaml/load (fs/readFileSync "test/fly_exec/fixtures/pipeline.yml"))
            :keywordize-keys true))
 
 (deftest find-task
@@ -19,7 +19,7 @@
 (deftest task-params
   (let [task (fly/find-task pipeline "job-with-tasks/some-task")
         params (fly/task-params task)]
-    (is (= '("foo=bar")
+    (is (= '("foo='bar'")
            params))))
 
 (deftest fly-flags
@@ -31,6 +31,13 @@
              "-c" "~/workspace/some-input/jobs/job-with-tasks/tasks/some-task/task.yml"
              "-j" "pipeline/job")
            flags))))
+
+(deftest task-outputs
+  (let [task      {:file "task.yml"}
+        workspace "test/fly_exec/fixtures/"
+        outputs   (fly/task-outputs workspace task)]
+    (is (= (list "-o" (str "some-output=" workspace "/some-output"))
+           outputs))))
 
 (deftest task-priv-flag
   (let [task (fly/find-task pipeline "job-with-tasks/some-task")

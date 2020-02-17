@@ -1,0 +1,16 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: repo/image
+    tag: latest
+
+inputs:
+- name: some-input
+
+outputs:
+- name: some-output
+
+run:
+  path: some-input/jobs/job-with-tasks/tasks/some-task/task.yml
