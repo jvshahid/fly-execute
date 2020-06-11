@@ -75,8 +75,8 @@ Examples:
           task                 (fly/find-task concourse-pipeline job)
           [job-name task-name] (string/split job #"/")]
       (println (string/join " " (concat (fly/task-params task)
-                                        (fly/task-tags task)
                                         (fly/fly-flags target workspace pipeline job-name task)
+                                        (fly/task-tags task)
                                         (fly/task-priv-flag task)
                                         (fly/task-image-flag task)
                                         (fly/task-inputs workspace input)
