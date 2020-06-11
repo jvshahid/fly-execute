@@ -37,9 +37,8 @@
         "-j" (str pipeline "/" job)))
 
 (defn task-priv-flag [task]
-  (let [privileged? (:privileged task)]
-    (if privileged?
-      (list "-p"))))
+  (if (:privileged task)
+    (list "-p")))
 
 (defn task-image-flag [task]
   (let [image (:image task)]

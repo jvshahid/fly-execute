@@ -73,7 +73,7 @@ Examples:
       (print-help-and-exit))
     (let [concourse-pipeline   (get-pipeline target pipeline)
           task                 (fly/find-task concourse-pipeline job)
-          [job-name task-name] (string/split job #"/")]
+          [job-name _]         (string/split job #"/")]
       (println (string/join " " (concat (fly/task-params task)
                                         (fly/fly-flags target workspace pipeline job-name task)
                                         (fly/task-tags task)
