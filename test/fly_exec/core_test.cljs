@@ -16,6 +16,12 @@
     (is (= "some-task"
            (:task task)))))
 
+(deftest task-tags
+  (let [task (fly/find-task pipeline "job-with-tasks/some-task")
+        tags (fly/task-tags task)]
+    (is (= '("--tag='tag1'" "--tag='tag2'")
+           tags))))
+
 (deftest task-params
   (let [task (fly/find-task pipeline "job-with-tasks/some-task")
         params (fly/task-params task)]

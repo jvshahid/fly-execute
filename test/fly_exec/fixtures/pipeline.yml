@@ -6,6 +6,9 @@ jobs:
     - get: input-1
     - get: input-2
   - task: some-task
+    tags:
+    - tag1
+    - tag2
     file: some-input/jobs/job-with-tasks/tasks/some-task/task.yml
     privileged: true
     params:
@@ -13,3 +16,4 @@ jobs:
     image: input-1
     input_mapping:
       task-input: input-2
+

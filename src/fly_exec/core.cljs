@@ -12,6 +12,12 @@
                                       (:plan concourse-job)))]
     concourse-task))
 
+(defn task-tags [task]
+  (let [tags (:tags task)]
+    (for [tag tags]
+      (str "--tag="
+           "'" tag "'"))))
+
 (defn task-params [task]
   (let [params (:params task)]
     (for [[param value] params]
