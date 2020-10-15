@@ -9,6 +9,5 @@ if [[ -L ${binary_path} ]]; then
 fi
 root=$(dirname ${binary_path})/..
 
-pushd $root
-  node_modules/.bin/lumo -k ~/.lumo_cache/ -c $root/src -m fly-exec.main "$@"
-popd
+cd $root
+node_modules/.bin/lumo -k ~/.lumo_cache/ -c $root/src -m fly-exec.main "$@"
