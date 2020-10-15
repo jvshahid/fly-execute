@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 export FLY_EXEC_PATH=$0
-$(npm bin)/lumo -K -c src -m fly-exec.main "$@"
+npx lumo -K -c src -m fly-exec.main "$@"
