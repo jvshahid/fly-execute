@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
 
+set -ex
+
 export FLY_EXEC_PATH=$0
-npx lumo -K -c src -m fly-exec.main "$@"
+binary_path=${FLY_EXEC_PATH}
+if [[ -L ${binary_path} ]]; then
+    binary_path=$(readlink -f ${binary_path})
+fi
+root=$(dirname ${binary_path})/..
+lumo -K -c $root/src -m fly-exec.main "$@"

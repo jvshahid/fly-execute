@@ -11,8 +11,10 @@
   "devDependencies": {},
   "directories": {
     "lib": "src",
-    "bin": "bin",
     "cache": ".lumo-cache"
+  },
+  "bin": {
+    "fly-exec": "./bin/fly-exec"
   },
   "author": "John Shahid",
   "license": "MIT"
