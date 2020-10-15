@@ -10,5 +10,5 @@ fi
 root=$(dirname ${binary_path})/..
 
 pushd $root
-  npx lumo -k ~/.lumo_cache/ -c $root/src -m fly-exec.main "$@"
+  node_modules/.bin/lumo -k ~/.lumo_cache/ -c $root/src -m fly-exec.main "$@"
 popd
