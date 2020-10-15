@@ -8,4 +8,7 @@ if [[ -L ${binary_path} ]]; then
     binary_path=$(readlink -f ${binary_path})
 fi
 root=$(dirname ${binary_path})/..
-lumo -K -c $root/src -m fly-exec.main "$@"
+
+pushd $root
+  lumo -k ~/.lumo_cache/ -c $root/src -m fly-exec.main "$@"
+popd
