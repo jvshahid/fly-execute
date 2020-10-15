@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 export FLY_EXEC_PATH=$0
 binary_path=${FLY_EXEC_PATH}
