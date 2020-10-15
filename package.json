@@ -1,6 +1,6 @@
 {
   "name": "fly-execute",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Helps you painlessly do fly execute",
   "dependencies": {
     "andare": "^0.12.0",
