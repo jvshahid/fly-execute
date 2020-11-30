@@ -36,7 +36,7 @@
     (fs/writeFileSync tmpfile (yaml/dump (clj->js content)))
     tmpfile))
 
-(defn- task-file [workspace {:keys [file config :as task]}]
+(defn- task-file [workspace {:keys [file config] :as task}]
   (cond
     config (create-config-file task)
     file   (str workspace "/" file)))
