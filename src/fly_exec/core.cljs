@@ -1,5 +1,6 @@
 (ns fly-exec.core
   (:require [clojure.string :as string]
+            [process]
             [fs]
             [js-yaml :as yaml]))
 
@@ -25,9 +26,20 @@
            "="
            "'" value "'"))))
 
-(defn- task-file [workspace task]
-  (let [file (:file task)]
-    (str workspace "/" file)))
+(def tmp
+  (or (.-TMPDIR process/env)
+      "/tmp"))
+
+(defn- create-config-file [{:keys [params config]}]
+  (let [tmpfile (str tmp "/fly-exec-task.yml")
+        content (assoc config :params params)]
+    (fs/writeFileSync tmpfile (yaml/dump (clj->js content)))
+    tmpfile))
+
+(defn- task-file [workspace {:keys [file config :as task]}]
+  (cond
+    config (create-config-file task)
+    file   (str workspace "/" file)))
 
 (defn fly-flags [target workspace pipeline job task]
   (list "fly"
